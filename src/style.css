@@ -95,9 +95,9 @@ body {
 }
 
 .track-item.active {
-  background-color: rgba(255,255,255,0.08);
-  color: var(--text-primary);
-  border-left: 3px solid var(--accent-color);
+  background-color: rgba(255, 236, 179, 0.08);
+  color: #ffecb3;
+  border-left: 3px solid #ffecb3;
 }
 
 .track-item-icon {
