@@ -52,15 +52,15 @@ document.querySelector('#app').innerHTML = `
               <line x1="4" y1="4" x2="9" y2="9"></line>
             </svg>
           </button>
+        </div>
+        
+        <div class="center-controls">
           <button class="icon-btn" id="prevBtn" title="Previous">
             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
               <polygon points="19 20 9 12 19 4 19 20"></polygon>
               <line x1="5" y1="19" x2="5" y2="5"></line>
             </svg>
           </button>
-        </div>
-        
-        <div class="center-controls">
           <button id="customPlayBtn" class="play-pause-btn" title="Play/Pause">
             <svg class="play-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="currentColor">
               <polygon points="5 3 19 12 5 21 5 3"></polygon>
@@ -70,15 +70,15 @@ document.querySelector('#app').innerHTML = `
               <rect x="14" y="4" width="4" height="16"></rect>
             </svg>
           </button>
-        </div>
-        
-        <div class="right-controls">
           <button class="icon-btn" id="nextBtn" title="Next">
             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
               <polygon points="5 4 15 12 5 20 5 4"></polygon>
               <line x1="19" y1="5" x2="19" y2="19"></line>
             </svg>
           </button>
+        </div>
+        
+        <div class="right-controls">
           <button class="icon-btn" id="repeatBtn" title="Repeat">
             <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
               <polyline points="17 1 21 5 17 9"></polyline>
@@ -215,14 +215,34 @@ customPlayBtn.addEventListener('click', () => {
   else audioPlayer.pause();
 });
 
+let progressAnimId = null;
+
+function updateProgress() {
+  if (audioPlayer.duration) {
+    const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+    progressBar.value = progress;
+    progressBar.style.setProperty('--progress', progress + '%');
+    progressBar.style.setProperty('--progress-raw', progress);
+    currentTimeDisplay.textContent = formatTime(audioPlayer.currentTime);
+  }
+  progressAnimId = requestAnimationFrame(updateProgress);
+}
+
 audioPlayer.addEventListener('play', () => {
   playIcon.style.display = 'none';
   pauseIcon.style.display = 'block';
+  if (!progressAnimId) {
+    progressAnimId = requestAnimationFrame(updateProgress);
+  }
 });
 
 audioPlayer.addEventListener('pause', () => {
   playIcon.style.display = 'block';
   pauseIcon.style.display = 'none';
+  if (progressAnimId) {
+    cancelAnimationFrame(progressAnimId);
+    progressAnimId = null;
+  }
 });
 
 prevBtn.addEventListener('click', () => {
@@ -244,14 +264,7 @@ audioPlayer.addEventListener('ended', () => {
   }
 });
 
-// Progress Bar
-audioPlayer.addEventListener('timeupdate', () => {
-  if (audioPlayer.duration) {
-    const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-    progressBar.value = progress;
-    currentTimeDisplay.textContent = formatTime(audioPlayer.currentTime);
-  }
-});
+// Progress Bar (now handled by requestAnimationFrame in play/pause)
 
 audioPlayer.addEventListener('loadedmetadata', () => {
   totalTimeDisplay.textContent = formatTime(audioPlayer.duration);
@@ -261,6 +274,9 @@ progressBar.addEventListener('input', (e) => {
   if (audioPlayer.duration) {
     const seekTime = (e.target.value / 100) * audioPlayer.duration;
     audioPlayer.currentTime = seekTime;
+    progressBar.style.setProperty('--progress', e.target.value + '%');
+    progressBar.style.setProperty('--progress-raw', e.target.value);
+    currentTimeDisplay.textContent = formatTime(seekTime);
   }
 });
 
