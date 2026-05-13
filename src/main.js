@@ -6,15 +6,9 @@ document.querySelector('#app').innerHTML = `
   <div id="bgTitle" class="bg-title">Mupl</div>
   
   <div class="player-container">
-    <div class="header">
-      <h1>DriveStream</h1>
-      <p>Play audio directly from Google Drive</p>
-    </div>
-
     <div id="loadingSpinner" class="loading-spinner"></div>
     <div id="errorMessage" class="error-message"></div>
-    <div id="trackList" class="track-list"></div>
-
+    
     <div id="audioSection" class="audio-section">
       <div class="controls-extra">
         <div class="center-controls">
@@ -56,6 +50,7 @@ document.querySelector('#app').innerHTML = `
       </audio>
     </div>
   </div>
+  <div id="trackList" class="side-track-list"></div>
 `;
 
 // Extract ID and Type from Google Drive URL
@@ -118,7 +113,9 @@ function renderTrackList(files) {
   trackListContainer.innerHTML = '';
   currentFiles = files;
   
-  files.forEach((file, index) => {
+  const displayFiles = files.slice(0, 20);
+  
+  displayFiles.forEach((file, index) => {
     // Remove the file extension for a cleaner display
     const cleanName = file.name.replace(/\.[a-zA-Z0-9]+$/, '');
 
