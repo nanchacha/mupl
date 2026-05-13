@@ -30,17 +30,7 @@ document.querySelector('#app').innerHTML = `
             <h1 id="trackTitleDisplay">Select a track</h1>
             <p id="trackArtistDisplay">Google Drive</p>
           </div>
-          <button class="add-btn">
-            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-          </button>
         </div>
-      </div>
-      
-      <div class="lyrics-section">
-        <div id="largeBgTitle" class="large-title">Mupl Player</div>
       </div>
     </div>
 
@@ -120,7 +110,6 @@ document.querySelector('#app').innerHTML = `
 const trackListContainer = document.getElementById('trackList');
 const audioPlayer = document.getElementById('audioPlayer');
 const trackTitleDisplay = document.getElementById('trackTitleDisplay');
-const largeBgTitle = document.getElementById('largeBgTitle');
 const statusMsg = document.getElementById('statusMsg');
 
 const customPlayBtn = document.getElementById('customPlayBtn');
@@ -205,8 +194,14 @@ function playFile(fileId, title) {
   const streamUrl = `/api/stream?id=${fileId}`;
   
   trackTitleDisplay.textContent = title;
-  largeBgTitle.textContent = title;
-  largeBgTitle.classList.add('active');
+  trackTitleDisplay.classList.remove('scroll-text');
+  
+  // Wait for DOM to render the new text size before measuring
+  requestAnimationFrame(() => {
+    if (trackTitleDisplay.scrollWidth > trackTitleDisplay.parentElement.clientWidth) {
+      trackTitleDisplay.classList.add('scroll-text');
+    }
+  });
   
   audioPlayer.src = streamUrl;
   audioPlayer.load();
