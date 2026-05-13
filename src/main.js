@@ -1,111 +1,162 @@
 import './style.css';
 
 document.querySelector('#app').innerHTML = `
-  <div class="bg-shape bg-shape-1"></div>
-  <div class="bg-shape bg-shape-2"></div>
-  <div id="bgTitle" class="bg-title">Mupl</div>
-  
-  <div class="player-container">
-    <div id="loadingSpinner" class="loading-spinner"></div>
-    <div id="errorMessage" class="error-message"></div>
-    
-    <div id="audioSection" class="audio-section">
-      <div class="controls-extra">
-        <div class="center-controls">
-          <button id="customPlayBtn" class="custom-play-btn" title="Play/Pause">
-            <svg class="play-icon" viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="currentColor" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="6 3 20 12 6 21 6 3"></polygon>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>Mupl</h2>
+      <p>Premium Player</p>
+    </div>
+    <div id="trackList" class="track-list">
+      <!-- Tracks loaded here -->
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="top-bar">
+      <div class="playing-info">
+        <span class="label">PLAYING FROM FOLDER</span>
+        <h3 id="playlistName">Mupl Default Library</h3>
+      </div>
+    </header>
+
+    <div class="content-body">
+      <div class="album-section">
+        <div class="album-art">
+          <img src="/album_placeholder.png" alt="Album Art">
+        </div>
+        <div class="track-info">
+          <div class="track-info-text">
+            <h1 id="trackTitleDisplay">Select a track</h1>
+            <p id="trackArtistDisplay">Google Drive</p>
+          </div>
+          <button class="add-btn">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-            <svg class="pause-icon" viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="currentColor" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+          </button>
+        </div>
+      </div>
+      
+      <div class="lyrics-section">
+        <div id="largeBgTitle" class="large-title">Mupl Player</div>
+      </div>
+    </div>
+
+    <div class="bottom-player-bar">
+      <div class="progress-container">
+        <span id="currentTimeDisplay">0:00</span>
+        <input type="range" id="progressBar" class="progress-bar" value="0" min="0" max="100" step="0.1">
+        <span id="totalTimeDisplay">0:00</span>
+      </div>
+      
+      <div class="controls-row">
+        <div class="left-controls">
+          <button class="icon-btn hidden" id="shuffleBtn" title="Shuffle">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+              <polyline points="16 3 21 3 21 8"></polyline>
+              <line x1="4" y1="20" x2="21" y2="3"></line>
+              <polyline points="21 16 21 21 16 21"></polyline>
+              <line x1="15" y1="15" x2="21" y2="21"></line>
+              <line x1="4" y1="4" x2="9" y2="9"></line>
+            </svg>
+          </button>
+          <button class="icon-btn" id="prevBtn" title="Previous">
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
+              <polygon points="19 20 9 12 19 4 19 20"></polygon>
+              <line x1="5" y1="19" x2="5" y2="5"></line>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="center-controls">
+          <button id="customPlayBtn" class="play-pause-btn" title="Play/Pause">
+            <svg class="play-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <svg class="pause-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="currentColor" style="display:none">
               <rect x="6" y="4" width="4" height="16"></rect>
               <rect x="14" y="4" width="4" height="16"></rect>
             </svg>
           </button>
         </div>
+        
         <div class="right-controls">
-          <div class="volume-container">
-            <button id="volumeBtn" class="volume-btn" title="Volume">
-              <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-              </svg>
-            </button>
-            <div id="volumePopup" class="volume-popup">
-              <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="1" class="volume-slider">
-            </div>
-          </div>
-          <button id="repeatBtn" class="repeat-btn" title="Toggle Repeat">
-            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <button class="icon-btn" id="nextBtn" title="Next">
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
+              <polygon points="5 4 15 12 5 20 5 4"></polygon>
+              <line x1="19" y1="5" x2="19" y2="19"></line>
+            </svg>
+          </button>
+          <button class="icon-btn" id="repeatBtn" title="Repeat">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
               <polyline points="17 1 21 5 17 9"></polyline>
               <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
               <polyline points="7 23 3 19 7 15"></polyline>
               <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
             </svg>
           </button>
+          <div class="volume-wrapper">
+            <button id="volumeBtn" class="icon-btn" title="Volume">
+              <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              </svg>
+            </button>
+            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.01" value="1">
+          </div>
         </div>
       </div>
-      <audio id="audioPlayer" controls controlslist="nodownload noplaybackrate">
-        <source id="audioSource" type="audio/mpeg">
-        Your browser does not support the audio element.
-      </audio>
+      
+      <audio id="audioPlayer" class="hidden"></audio>
     </div>
-  </div>
-  <div id="trackList" class="side-track-list"></div>
+  </main>
+  
+  <div id="statusMsg" class="status-msg"></div>
+</div>
 `;
 
-// Extract ID and Type from Google Drive URL
-function extractDriveInfo(url) {
-  // Folder matching
-  const matchFolder = url.match(/\/folders\/([a-zA-Z0-9_-]+)/);
-  if (matchFolder) return { type: 'folder', id: matchFolder[1] };
-
-  // File matching
-  const matchD = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if (matchD) return { type: 'file', id: matchD[1] };
-
-  const matchId = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if (matchId) return { type: 'file', id: matchId[1] };
-
-  return null;
-}
-
-const errorMessage = document.getElementById('errorMessage');
-const loadingSpinner = document.getElementById('loadingSpinner');
 const trackListContainer = document.getElementById('trackList');
-const audioSection = document.getElementById('audioSection');
 const audioPlayer = document.getElementById('audioPlayer');
-const audioSource = document.getElementById('audioSource');
-const bgTitle = document.getElementById('bgTitle');
-const repeatBtn = document.getElementById('repeatBtn');
-const volumeBtn = document.getElementById('volumeBtn');
-const volumePopup = document.getElementById('volumePopup');
-const volumeSlider = document.getElementById('volumeSlider');
+const trackTitleDisplay = document.getElementById('trackTitleDisplay');
+const largeBgTitle = document.getElementById('largeBgTitle');
+const statusMsg = document.getElementById('statusMsg');
+
 const customPlayBtn = document.getElementById('customPlayBtn');
 const playIcon = customPlayBtn.querySelector('.play-icon');
 const pauseIcon = customPlayBtn.querySelector('.pause-icon');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const repeatBtn = document.getElementById('repeatBtn');
+const volumeBtn = document.getElementById('volumeBtn');
+const volumeSlider = document.getElementById('volumeSlider');
+
+const progressBar = document.getElementById('progressBar');
+const currentTimeDisplay = document.getElementById('currentTimeDisplay');
+const totalTimeDisplay = document.getElementById('totalTimeDisplay');
 
 let currentFiles = [];
 let currentIndex = -1;
 
 async function loadFolder(folderId) {
-  loadingSpinner.style.display = 'block';
-
+  statusMsg.textContent = 'Loading playlist...';
+  
   try {
     const res = await fetch(`/api/folder?id=${folderId}`);
     if (!res.ok) throw new Error('Failed to load folder');
     const files = await res.json();
     
-    loadingSpinner.style.display = 'none';
+    statusMsg.textContent = '';
 
     if (files.length === 0) {
-      showError('No playable audio files found in this folder.');
+      statusMsg.textContent = 'No playable audio files found.';
       return;
     }
 
     renderTrackList(files);
   } catch (err) {
-    loadingSpinner.style.display = 'none';
-    showError('폴더 정보를 불러오는 데 실패했습니다. 폴더가 공개 설정되어 있는지 확인하세요.');
+    statusMsg.textContent = 'Failed to load folder.';
   }
 }
 
@@ -113,19 +164,16 @@ function renderTrackList(files) {
   trackListContainer.innerHTML = '';
   currentFiles = files;
   
-  const displayFiles = files.slice(0, 20);
-  
-  displayFiles.forEach((file, index) => {
-    // Remove the file extension for a cleaner display
+  files.forEach((file, index) => {
     const cleanName = file.name.replace(/\.[a-zA-Z0-9]+$/, '');
 
     const item = document.createElement('div');
     item.className = 'track-item';
     item.innerHTML = `
-      <svg class="track-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="5.5" cy="17.5" r="2.5"></circle>
-        <circle cx="17.5" cy="15.5" r="2.5"></circle>
-        <path d="M8 17V5l12-2v12"></path>
+      <svg class="track-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 18V5l12-2v13"></path>
+        <circle cx="6" cy="18" r="3"></circle>
+        <circle cx="18" cy="16" r="3"></circle>
       </svg>
       <div class="track-item-name">${cleanName}</div>
     `;
@@ -136,8 +184,6 @@ function renderTrackList(files) {
     
     trackListContainer.appendChild(item);
   });
-
-  trackListContainer.style.display = 'flex';
 }
 
 function playTrack(index) {
@@ -148,11 +194,8 @@ function playTrack(index) {
   const cleanName = file.name.replace(/\.[a-zA-Z0-9]+$/, '');
   
   document.querySelectorAll('.track-item').forEach((el, i) => {
-    if (i === index) {
-      el.classList.add('active');
-    } else {
-      el.classList.remove('active');
-    }
+    if (i === index) el.classList.add('active');
+    else el.classList.remove('active');
   });
 
   playFile(file.id, cleanName);
@@ -160,92 +203,21 @@ function playTrack(index) {
 
 function playFile(fileId, title) {
   const streamUrl = `/api/stream?id=${fileId}`;
-
-  // Update background title
-  bgTitle.textContent = title;
-  audioSection.style.display = 'flex';
   
-  // Update audio source and play
-  audioSource.src = streamUrl;
+  trackTitleDisplay.textContent = title;
+  largeBgTitle.textContent = title;
+  largeBgTitle.classList.add('active');
+  
+  audioPlayer.src = streamUrl;
   audioPlayer.load();
-  
-  audioPlayer.play().catch(err => {
-    console.error("Playback failed:", err);
-  });
+  audioPlayer.play().catch(err => console.error("Playback failed:", err));
 }
 
-// Handle repeat toggle
-repeatBtn.addEventListener('click', () => {
-  audioPlayer.loop = !audioPlayer.loop;
-  if (audioPlayer.loop) {
-    repeatBtn.classList.add('active');
-  } else {
-    repeatBtn.classList.remove('active');
-  }
-});
-
-// Handle volume popup toggle
-volumeBtn.addEventListener('click', (e) => {
-  volumePopup.classList.toggle('show');
-  e.stopPropagation(); // prevent clicking outside from immediately closing it
-});
-
-// Adjust volume
-volumeSlider.addEventListener('input', (e) => {
-  audioPlayer.volume = e.target.value;
-  // Update icon based on volume level
-  const vol = parseFloat(e.target.value);
-  if (vol === 0) {
-    volumeBtn.innerHTML = `
-      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-        <line x1="23" y1="9" x2="17" y2="15"></line>
-        <line x1="17" y1="9" x2="23" y2="15"></line>
-      </svg>`;
-  } else if (vol < 0.5) {
-    volumeBtn.innerHTML = `
-      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-      </svg>`;
-  } else {
-    volumeBtn.innerHTML = `
-      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-      </svg>`;
-  }
-});
-
-// Close popup when clicking outside
-document.addEventListener('click', (e) => {
-  if (!volumePopup.contains(e.target) && e.target !== volumeBtn) {
-    volumePopup.classList.remove('show');
-  }
-});
-
-// Handle audio loading errors (e.g., file is private)
-audioSource.addEventListener('error', () => {
-  // Only show error if a source was actually set
-  if (audioSource.getAttribute('src')) {
-    showError("오디오 로드 실패! 파일이 '링크가 있는 모든 사용자'로 공유되었는지 확인하세요.");
-  }
-});
-
-audioPlayer.addEventListener('ended', () => {
-  if (!audioPlayer.loop) {
-    if (currentIndex >= 0 && currentIndex < currentFiles.length - 1) {
-      playTrack(currentIndex + 1);
-    }
-  }
-});
-
+// Controls
 customPlayBtn.addEventListener('click', () => {
-  if (audioPlayer.paused) {
-    audioPlayer.play().catch(err => console.error("Playback failed:", err));
-  } else {
-    audioPlayer.pause();
-  }
+  if (!audioPlayer.src) return;
+  if (audioPlayer.paused) audioPlayer.play();
+  else audioPlayer.pause();
 });
 
 audioPlayer.addEventListener('play', () => {
@@ -258,17 +230,70 @@ audioPlayer.addEventListener('pause', () => {
   pauseIcon.style.display = 'none';
 });
 
-// Only repeat functionality is kept since disc icon is removed.
+prevBtn.addEventListener('click', () => {
+  if (currentIndex > 0) playTrack(currentIndex - 1);
+});
 
-function showError(msg) {
-  errorMessage.textContent = msg;
-  errorMessage.style.display = 'block';
-  audioSection.style.display = 'none';
-  trackListContainer.style.display = 'none';
-  audioPlayer.pause();
+nextBtn.addEventListener('click', () => {
+  if (currentIndex < currentFiles.length - 1) playTrack(currentIndex + 1);
+});
+
+repeatBtn.addEventListener('click', () => {
+  audioPlayer.loop = !audioPlayer.loop;
+  repeatBtn.classList.toggle('active', audioPlayer.loop);
+});
+
+audioPlayer.addEventListener('ended', () => {
+  if (!audioPlayer.loop && currentIndex < currentFiles.length - 1) {
+    playTrack(currentIndex + 1);
+  }
+});
+
+// Progress Bar
+audioPlayer.addEventListener('timeupdate', () => {
+  if (audioPlayer.duration) {
+    const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+    progressBar.value = progress;
+    currentTimeDisplay.textContent = formatTime(audioPlayer.currentTime);
+  }
+});
+
+audioPlayer.addEventListener('loadedmetadata', () => {
+  totalTimeDisplay.textContent = formatTime(audioPlayer.duration);
+});
+
+progressBar.addEventListener('input', (e) => {
+  if (audioPlayer.duration) {
+    const seekTime = (e.target.value / 100) * audioPlayer.duration;
+    audioPlayer.currentTime = seekTime;
+  }
+});
+
+function formatTime(seconds) {
+  if (isNaN(seconds)) return "0:00";
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-// Automatically load the default folder on startup
+// Volume
+volumeSlider.addEventListener('input', (e) => {
+  audioPlayer.volume = e.target.value;
+  updateVolumeIcon(e.target.value);
+});
+
+function updateVolumeIcon(vol) {
+  vol = parseFloat(vol);
+  if (vol === 0) {
+    volumeBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>';
+  } else if (vol < 0.5) {
+    volumeBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>';
+  } else {
+    volumeBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>';
+  }
+}
+
+// Initial Load
 window.addEventListener('DOMContentLoaded', () => {
   loadFolder('1SS9kZ16KErhHA-QMZmMm_QsO8aqS7O9C');
 });
