@@ -370,3 +370,89 @@ body {
   z-index: 20;
 }
 
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  body {
+    min-width: 100vw;
+    overflow-x: hidden;
+  }
+  
+  .app-layout {
+    width: 100vw;
+  }
+  
+  .sidebar {
+    width: 35%; /* Keep on left but smaller */
+    padding: 16px 0;
+  }
+  
+  .sidebar-header {
+    padding: 0 12px 16px 12px;
+  }
+  
+  .sidebar-header h2 {
+    font-size: 18px;
+  }
+  
+  .track-item {
+    padding: 8px;
+    gap: 8px;
+  }
+  
+  .track-item-name {
+    font-size: 12px;
+  }
+  
+  .main-content {
+    width: 65%;
+  }
+  
+  .top-bar {
+    padding: 16px;
+  }
+  
+  .content-body {
+    padding: 16px 16px 140px 16px;
+  }
+  
+  .track-info-text h1 {
+    font-size: 20px;
+  }
+  
+  .track-info-text p {
+    font-size: 14px;
+  }
+  
+  /* Make bottom player span full width of screen, not just main-content */
+  .bottom-player-bar {
+    position: fixed;
+    width: calc(100vw - 32px);
+    left: 16px;
+    transform: none;
+    bottom: 16px;
+    padding: 16px;
+  }
+  
+  .controls-row {
+    gap: 8px;
+  }
+  
+  .left-controls, .right-controls {
+    gap: 16px;
+  }
+  
+  .center-controls {
+    gap: 16px;
+  }
+  
+  .play-pause-btn {
+    width: 44px;
+    height: 44px;
+  }
+  
+  /* Hide volume slider on mobile to restore grid balance */
+  .volume-wrapper {
+    display: none;
+  }
+}
+
