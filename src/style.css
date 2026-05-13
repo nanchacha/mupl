@@ -340,8 +340,11 @@ body {
   justify-content: center;
   transition: color 0.2s;
 }
-.icon-btn:hover, .icon-btn.active {
+.icon-btn:hover {
   color: white;
+}
+.icon-btn.active {
+  color: #ffc107;
 }
 
 .play-pause-btn {
