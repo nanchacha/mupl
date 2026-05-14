@@ -417,7 +417,7 @@ body {
   
   .sidebar {
     width: 35%; /* Keep on left but smaller */
-    padding: 16px 0;
+    padding: 16px 0 140px 0;
   }
   
   .sidebar-header {
@@ -469,10 +469,11 @@ body {
   
   .controls-row {
     gap: 8px;
+    position: relative;
   }
   
   .left-controls, .right-controls {
-    gap: 16px;
+    gap: 10px;
   }
   
   .center-controls {
@@ -484,9 +485,18 @@ body {
     height: 44px;
   }
   
-  /* Hide volume slider on mobile to restore grid balance */
+  /* Move volume slider to the left on mobile */
   .volume-wrapper {
-    display: none;
+    display: flex;
+    gap: 8px;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  
+  .volume-slider {
+    width: 50px;
   }
 }
 
