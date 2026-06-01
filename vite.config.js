@@ -21,14 +21,14 @@ export default defineConfig({
             googleRes.on('data', chunk => data += chunk);
             googleRes.on('end', () => {
               // Parse the HTML to find file IDs and names
-              const regex = /\[null,&quot;([a-zA-Z0-9_-]+)&quot;\].+?&quot;((?:(?!&quot;).)+(?:\.mp3|\.m4a|\.wav|\.flac|\.ogg))&quot;/g;
+              const regex = /<div[^>]*data-id="([a-zA-Z0-9_-]+)"[^>]*>[\s\S]*?<strong class="DNoYtb">([^<]+(?:\.mp3|\.m4a|\.wav|\.flac|\.ogg))<\/strong>/g;
               const files = [];
               const seenIds = new Set();
               
               let match;
               while ((match = regex.exec(data)) !== null) {
                 const id = match[1];
-                const name = match[2].replace(/&amp;/g, '&');
+                let name = match[2].replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"');
                 if (!seenIds.has(id)) {
                   seenIds.add(id);
                   files.push({ id, name });
