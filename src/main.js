@@ -2,10 +2,19 @@ import './style.css';
 
 document.querySelector('#app').innerHTML = `
 <div class="app-layout">
-  <aside class="sidebar">
+  <div id="sidebarOverlay" class="sidebar-overlay"></div>
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <h2>Mupl</h2>
-      <p>Premium Player</p>
+      <div class="sidebar-title-area">
+        <h2>Mupl</h2>
+        <p>Premium Player</p>
+      </div>
+      <button id="closeSidebarBtn" class="icon-btn mobile-only" title="Close Playlist">
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
     </div>
     <div id="trackList" class="track-list">
       <!-- Tracks loaded here -->
@@ -18,6 +27,16 @@ document.querySelector('#app').innerHTML = `
         <span class="label">PLAYING FROM FOLDER</span>
         <h3 id="playlistName">Mupl Default Library</h3>
       </div>
+      <button id="playlistToggleBtn" class="icon-btn mobile-only" title="Toggle Playlist">
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
+          <line x1="8" y1="6" x2="21" y2="6"></line>
+          <line x1="8" y1="12" x2="21" y2="12"></line>
+          <line x1="8" y1="18" x2="21" y2="18"></line>
+          <line x1="3" y1="6" x2="3.01" y2="6"></line>
+          <line x1="3" y1="12" x2="3.01" y2="12"></line>
+          <line x1="3" y1="18" x2="3.01" y2="18"></line>
+        </svg>
+      </button>
     </header>
 
     <div class="content-body">
@@ -112,6 +131,26 @@ const audioPlayer = document.getElementById('audioPlayer');
 const trackTitleDisplay = document.getElementById('trackTitleDisplay');
 const statusMsg = document.getElementById('statusMsg');
 
+const sidebar = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+const playlistToggleBtn = document.getElementById('playlistToggleBtn');
+const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+
+playlistToggleBtn.addEventListener('click', () => {
+  sidebar.classList.add('mobile-open');
+  sidebarOverlay.classList.add('mobile-open');
+});
+
+closeSidebarBtn.addEventListener('click', () => {
+  sidebar.classList.remove('mobile-open');
+  sidebarOverlay.classList.remove('mobile-open');
+});
+
+sidebarOverlay.addEventListener('click', () => {
+  sidebar.classList.remove('mobile-open');
+  sidebarOverlay.classList.remove('mobile-open');
+});
+
 const customPlayBtn = document.getElementById('customPlayBtn');
 const playIcon = customPlayBtn.querySelector('.play-icon');
 const pauseIcon = customPlayBtn.querySelector('.pause-icon');
@@ -186,6 +225,11 @@ function playTrack(index) {
     if (i === index) el.classList.add('active');
     else el.classList.remove('active');
   });
+
+  if (window.innerWidth <= 768) {
+    sidebar.classList.remove('mobile-open');
+    sidebarOverlay.classList.remove('mobile-open');
+  }
 
   playFile(file.id, cleanName);
 }
