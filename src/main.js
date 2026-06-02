@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import './style.css';
 
 document.querySelector('#app').innerHTML = `
@@ -39,20 +40,6 @@ document.querySelector('#app').innerHTML = `
       </button>
     </header>
 
-    <div class="content-body">
-      <div class="album-section">
-        <div class="album-art">
-          <img src="/album_placeholder.png" alt="Album Art">
-        </div>
-        <div class="track-info">
-          <div class="track-info-text">
-            <h1 id="trackTitleDisplay">Select a track</h1>
-            <p id="trackArtistDisplay">Google Drive</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div class="bottom-player-bar">
       <div class="progress-container">
         <span id="currentTimeDisplay">0:00</span>
@@ -62,6 +49,10 @@ document.querySelector('#app').innerHTML = `
       
       <div class="controls-row">
         <div class="left-controls">
+          <div class="track-info-text-mini">
+            <h3 id="trackTitleDisplay">Select a track</h3>
+            <p id="trackArtistDisplay">Google Drive</p>
+          </div>
           <button class="icon-btn hidden" id="shuffleBtn" title="Shuffle">
             <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
               <polyline points="16 3 21 3 21 8"></polyline>
@@ -128,6 +119,7 @@ document.querySelector('#app').innerHTML = `
 
 const trackListContainer = document.getElementById('trackList');
 const audioPlayer = document.getElementById('audioPlayer');
+audioPlayer.crossOrigin = 'anonymous';
 const trackTitleDisplay = document.getElementById('trackTitleDisplay');
 const statusMsg = document.getElementById('statusMsg');
 
@@ -351,4 +343,265 @@ function updateVolumeIcon(vol) {
 // Initial Load
 window.addEventListener('DOMContentLoaded', () => {
   loadFolder('1SS9kZ16KErhHA-QMZmMm_QsO8aqS7O9C');
+  initThreeJS();
 });
+
+// --- Three.js Setup & Audio Analyzer ---
+
+let analyser = null;
+let dataArray = null;
+let audioContext = null;
+
+// Three.js Objects
+let scene, camera, renderer;
+let turntableBase, platter, record, tonearmPivot, tonearmArm;
+let isPlaying = false;
+let currentRotation = 0;
+
+function initAudioAnalyzer() {
+  if (audioContext) return; // Already initialized
+  try {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioContext.createMediaElementSource(audioPlayer);
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+    source.connect(analyser);
+    analyser.connect(audioContext.destination);
+    const bufferLength = analyser.frequencyBinCount;
+    dataArray = new Uint8Array(bufferLength);
+  } catch (e) {
+    console.error("AudioContext init failed:", e);
+  }
+}
+
+function initThreeJS() {
+  // Create Canvas
+  const canvas = document.createElement('canvas');
+  canvas.id = 'webgl-canvas';
+  document.body.prepend(canvas);
+
+  // Scene setup
+  scene = new THREE.Scene();
+  // No background color, let it be transparent or we can add a subtle color
+  // Actually we'll use a deep dark background with some fog
+  scene.background = new THREE.Color(0x0a0a0a);
+  scene.fog = new THREE.FogExp2(0x0a0a0a, 0.05);
+
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+  // Position camera to look down slightly at the turntable
+  camera.position.set(0, 8, 12);
+  camera.lookAt(0, 0, 0);
+
+  renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+
+  // Lights
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambientLight);
+
+  const spotLight = new THREE.SpotLight(0xffffff, 2.5);
+  spotLight.position.set(5, 15, 5);
+  spotLight.castShadow = true;
+  spotLight.angle = Math.PI / 4;
+  spotLight.penumbra = 0.5;
+  scene.add(spotLight);
+
+  const pointLight = new THREE.PointLight(0x00d2ff, 1.2, 20); // Cyan glow
+  pointLight.position.set(-5, 5, -5);
+  scene.add(pointLight);
+
+  // Turntable Base
+  const baseGeo = new THREE.BoxGeometry(10, 1, 8);
+  const baseMat = new THREE.MeshStandardMaterial({ 
+    color: 0xe8e8e8, // Sleek white/silver base
+    roughness: 0.3, 
+    metalness: 0.1 
+  });
+  turntableBase = new THREE.Mesh(baseGeo, baseMat);
+  turntableBase.position.y = -0.5;
+  turntableBase.receiveShadow = true;
+  scene.add(turntableBase);
+
+  // Platter
+  const platterGeo = new THREE.CylinderGeometry(3.5, 3.5, 0.2, 64);
+  const platterMat = new THREE.MeshStandardMaterial({ 
+    color: 0xb0b0b0, // Lighter metallic
+    metalness: 0.9,
+    roughness: 0.1
+  });
+  platter = new THREE.Mesh(platterGeo, platterMat);
+  platter.position.y = 0.1;
+  platter.castShadow = true;
+  scene.add(platter);
+
+  // Record
+  const recordGeo = new THREE.CylinderGeometry(3.4, 3.4, 0.05, 64);
+  const recordMat = new THREE.MeshStandardMaterial({ 
+    color: 0x050505,
+    roughness: 0.4,
+    metalness: 0.1
+  });
+  record = new THREE.Mesh(recordGeo, recordMat);
+  record.position.y = 0.15;
+  platter.add(record); // Add to platter so it spins with it
+
+  // Record Label (Center)
+  const labelGeo = new THREE.CylinderGeometry(1.2, 1.2, 0.06, 32);
+  const labelMat = new THREE.MeshStandardMaterial({ color: 0xffc107 }); // Yellow accent
+  const label = new THREE.Mesh(labelGeo, labelMat);
+  label.position.y = 0.01;
+  record.add(label);
+
+  // Label Marker (makes rotation extremely obvious)
+  const markerGeo = new THREE.BoxGeometry(1.6, 0.07, 0.2);
+  const markerMat = new THREE.MeshStandardMaterial({ color: 0xff3333 }); // Red stripe
+  const marker = new THREE.Mesh(markerGeo, markerMat);
+  marker.position.set(0.3, 0.01, 0);
+  label.add(marker);
+
+  // Center Hole
+  const centerHoleGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.1, 16);
+  const centerHoleMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+  const centerHole = new THREE.Mesh(centerHoleGeo, centerHoleMat);
+  centerHole.position.y = 0.03;
+  label.add(centerHole);
+
+  // Record Grooves (Rings)
+  const ringMat = new THREE.MeshBasicMaterial({ color: 0x1a1a1a });
+  for(let i = 1.5; i < 3.3; i += 0.2) {
+    const ringGeo = new THREE.RingGeometry(i, i + 0.02, 64);
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.03;
+    record.add(ring);
+  }
+
+  // Tonearm
+  tonearmPivot = new THREE.Group();
+  tonearmPivot.position.set(4, 0.5, -3);
+  scene.add(tonearmPivot);
+
+  const pivotBaseGeo = new THREE.CylinderGeometry(0.5, 0.5, 1, 32);
+  const pivotBaseMat = new THREE.MeshStandardMaterial({ color: 0x666666, metalness: 0.9, roughness: 0.1 });
+  const pivotBase = new THREE.Mesh(pivotBaseGeo, pivotBaseMat);
+  tonearmPivot.add(pivotBase);
+
+  const armGeo = new THREE.CylinderGeometry(0.05, 0.05, 4.5, 16);
+  const armMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 1, roughness: 0.1 });
+  tonearmArm = new THREE.Mesh(armGeo, armMat);
+  tonearmArm.rotation.x = Math.PI / 2;
+  tonearmArm.position.set(0, 0.5, 2);
+  tonearmPivot.add(tonearmArm);
+
+  const headshellGeo = new THREE.BoxGeometry(0.3, 0.2, 0.6);
+  const headshellMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+  const headshell = new THREE.Mesh(headshellGeo, headshellMat);
+  headshell.position.set(0, 0, 2.2);
+  tonearmArm.add(headshell);
+
+  // Particles
+  const particlesGeo = new THREE.BufferGeometry();
+  const particlesCount = 200;
+  const posArray = new Float32Array(particlesCount * 3);
+  for(let i=0; i<particlesCount*3; i++) {
+    posArray[i] = (Math.random() - 0.5) * 20;
+  }
+  particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+  const particlesMat = new THREE.PointsMaterial({
+    size: 0.05,
+    color: 0x00d2ff,
+    transparent: true,
+    opacity: 0.6,
+    blending: THREE.AdditiveBlending
+  });
+  const particlesMesh = new THREE.Points(particlesGeo, particlesMat);
+  scene.add(particlesMesh);
+
+  // Resize Handling
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  // Start Animation
+  animate();
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  // Rotate platter if playing
+  if (isPlaying) {
+    currentRotation += 0.06; // Faster rotation (~33 RPM feel)
+    platter.rotation.y = -currentRotation; // Rotate clockwise
+  }
+
+  // Audio Reactivity
+  if (analyser && dataArray && isPlaying) {
+    analyser.getByteFrequencyData(dataArray);
+    
+    // Calculate average bass (lower frequencies)
+    let bassSum = 0;
+    for(let i=0; i<10; i++) {
+      bassSum += dataArray[i];
+    }
+    const avgBass = bassSum / 10;
+    
+    // Scale label based on bass
+    const scale = 1 + (avgBass / 255) * 0.15;
+    record.children[0].scale.set(scale, 1, scale); // Scale the label
+
+    // Pulse lights based on bass
+    scene.children.forEach(child => {
+      if(child.isPointLight) {
+        child.intensity = 1.2 + (avgBass / 255) * 3;
+      }
+    });
+
+    // Make tonearm bounce slightly to the bass (like needle jumping)
+    tonearmPivot.position.y = 0.5 + (avgBass / 255) * 0.04;
+
+    // Dynamic Camera zoom based on heavy bass
+    const targetZ = 12 + (avgBass / 255) * 0.8;
+    camera.position.z += (targetZ - camera.position.z) * 0.1;
+  } else {
+    // Relax camera back to default
+    camera.position.z += (12 - camera.position.z) * 0.05;
+    tonearmPivot.position.y += (0.5 - tonearmPivot.position.y) * 0.1;
+  }
+
+  // Tonearm movement based on progress
+  let progress = 0;
+  if (audioPlayer.duration) {
+    progress = audioPlayer.currentTime / audioPlayer.duration;
+  }
+  // Base rotation (idle): 0. 
+  // Playing start rotation: ~0.4 rad
+  // Playing end rotation: ~0.8 rad
+  const targetRotation = isPlaying ? 0.4 + (progress * 0.4) : 0;
+  // Smoothly move tonearm
+  tonearmPivot.rotation.y += (targetRotation - tonearmPivot.rotation.y) * 0.05;
+
+  renderer.render(scene, camera);
+}
+
+// Hook into existing play/pause logic
+const originalPlay = audioPlayer.play.bind(audioPlayer);
+const originalPause = audioPlayer.pause.bind(audioPlayer);
+
+audioPlayer.play = function() {
+  if(audioContext && audioContext.state === 'suspended') {
+    audioContext.resume();
+  }
+  initAudioAnalyzer();
+  isPlaying = true;
+  return originalPlay();
+};
+
+audioPlayer.pause = function() {
+  isPlaying = false;
+  return originalPause();
+};

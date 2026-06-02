@@ -1,10 +1,10 @@
 :root {
-  --sidebar-bg: #121212;
-  --main-bg: #181818;
+  --sidebar-bg: rgba(18, 18, 18, 0.4);
+  --main-bg: transparent;
   --text-primary: #ffffff;
-  --text-secondary: #a0a0a0;
-  --player-bg: rgba(24, 24, 24, 0.85);
-  --player-border: rgba(255, 255, 255, 0.08);
+  --text-secondary: #c0c0c0;
+  --player-bg: rgba(24, 24, 24, 0.5);
+  --player-border: rgba(255, 255, 255, 0.15);
   --accent-color: #ffffff;
 }
 
@@ -12,6 +12,16 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+#webgl-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
 }
 
 body {
@@ -35,6 +45,8 @@ body {
 .sidebar {
   width: 260px;
   background-color: var(--sidebar-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   display: flex;
   flex-direction: column;
   padding: 32px 0 24px 0;
@@ -154,83 +166,36 @@ body {
   font-weight: 600;
 }
 
-/* CONTENT BODY */
-.content-body {
-  flex: 1;
-  display: flex;
-  padding: 20px 48px 140px 48px; /* space for bottom player */
-  justify-content: center;
-  align-items: center;
-}
-
-.album-section {
-  width: 100%;
-  max-width: 500px;
+.track-info-text-mini {
   display: flex;
   flex-direction: column;
-}
-
-.album-art {
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: 16px;
-  background-color: #000;
-  box-shadow: 0 30px 60px rgba(0,0,0,0.5);
-  margin-bottom: 32px;
+  gap: 4px;
+  max-width: 180px;
   overflow: hidden;
 }
 
-.album-art img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.track-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.track-info-text {
-  flex: 1;
-  overflow: hidden;
-  width: 100%;
-}
-
-.track-info-text h1 {
-  font-size: 32px;
-  font-weight: 800;
-  margin: 0 0 8px 0;
+.track-info-text-mini h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
   white-space: nowrap;
   display: inline-block;
+  color: #fff;
 }
 
-.track-info-text h1.scroll-text {
+.track-info-text-mini h3.scroll-text {
   padding-left: 100%;
-  animation: scroll-left 12s linear infinite;
+  animation: scroll-left 10s linear infinite;
 }
 
-@keyframes scroll-left {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-100%); }
-}
-
-.track-info-text p {
-  font-size: 16px;
+.track-info-text-mini p {
+  font-size: 12px;
   color: var(--text-secondary);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-
-
-
-
-/* BOTTOM PLAYER */
+}/* BOTTOM PLAYER */
 .bottom-player-bar {
   position: absolute;
   bottom: 32px;
