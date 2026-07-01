@@ -1,6 +1,5 @@
 import { google } from 'googleapis';
-import ytdl from '@distube/ytdl-core';
-import ffmpeg from 'fluent-ffmpeg';
+import youtubedl from 'youtube-dl-exec';
 import ffmpegStatic from 'ffmpeg-static';
 import { PassThrough } from 'stream';
 import dotenv from 'dotenv';
@@ -13,9 +12,6 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Set ffmpeg path
-  ffmpeg.setFfmpegPath(ffmpegStatic);
-
   let body = '';
   req.on('data', chunk => body += chunk);
   req.on('end', async () => {
@@ -23,13 +19,14 @@ export default async function handler(req, res) {
       const parsed = JSON.parse(body);
       const url = parsed.url;
       
-      if (!url || !ytdl.validateURL(url)) {
+      if (!url || (!url.includes('youtube.com') && !url.includes('youtu.be'))) {
         res.status(400).send('Invalid YouTube URL');
         return;
       }
 
-      const info = await ytdl.getInfo(url);
-      const title = info.videoDetails.title.replace(/[\\/:*?"<>|]/g, ''); // Clean filename
+      // Fetch video title using youtube-dl-exec (JSON dump)
+      const info = await youtubedl(url, { dumpJson: true, noWarnings: true });
+      const title = (info.title || 'Unknown Title').replace(/[\\/:*?"<>|]/g, '');
 
       // Set up Google Drive API
       const auth = new google.auth.JWT(
@@ -40,20 +37,19 @@ export default async function handler(req, res) {
       );
 
       const drive = google.drive({ version: 'v3', auth });
-
       const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
       
       if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY) {
          throw new Error("Google API credentials are not set in .env");
       }
 
-      // We use a PassThrough stream to pipe the ffmpeg output directly to Google Drive
       const passThrough = new PassThrough();
 
       const fileMetadata = {
         name: `${title}.mp3`,
         parents: [folderId]
       };
+      
       const media = {
         mimeType: 'audio/mp3',
         body: passThrough
@@ -66,17 +62,20 @@ export default async function handler(req, res) {
         fields: 'id'
       });
 
-      // Stream YouTube video -> ffmpeg -> PassThrough
-      const ytStream = ytdl(url, { quality: 'highestaudio' });
-      
-      ffmpeg(ytStream)
-        .audioBitrate(128)
-        .format('mp3')
-        .on('error', (err) => {
-          console.error('ffmpeg error:', err);
-          res.status(500).send('Error converting audio: ' + err.message);
-        })
-        .pipe(passThrough);
+      // Stream YouTube video to stdout using youtube-dl-exec (yt-dlp)
+      const ytProcess = youtubedl.exec(url, {
+        extractAudio: true,
+        audioFormat: 'mp3',
+        audioQuality: 0,
+        ffmpegLocation: ffmpegStatic,
+        output: '-',
+      }, { stdio: ['ignore', 'pipe', 'ignore'] });
+
+      ytProcess.stdout.pipe(passThrough);
+
+      ytProcess.on('error', (err) => {
+        console.error('yt-dlp process error:', err);
+      });
 
       // Wait for the upload to complete
       const uploadedFile = await uploadPromise;
@@ -86,7 +85,7 @@ export default async function handler(req, res) {
 
     } catch (error) {
       console.error(error);
-      res.status(500).send(error.message);
+      res.status(500).send(error.message || 'An error occurred during extraction or upload');
     }
   });
 }
