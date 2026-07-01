@@ -1,20 +1,23 @@
 import { google } from 'googleapis';
-import ytdl from '@distube/ytdl-core';
-import ffmpeg from 'fluent-ffmpeg';
+import { create } from 'youtube-dl-exec';
 import ffmpegStatic from 'ffmpeg-static';
 import { PassThrough } from 'stream';
 import dotenv from 'dotenv';
+import path from 'path';
+import os from 'os';
 
 dotenv.config();
+
+// Initialize youtube-dl-exec with the standalone binary downloaded via postinstall
+const binName = os.platform() === 'win32' ? 'yt-dlp.exe' : 'yt-dlp_linux';
+const ytDlpPath = path.join(process.cwd(), 'bin', binName);
+const youtubedl = create(ytDlpPath);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).send('Method Not Allowed');
     return;
   }
-
-  // Set ffmpeg path
-  ffmpeg.setFfmpegPath(ffmpegStatic);
 
   let body = '';
   req.on('data', chunk => body += chunk);
@@ -23,24 +26,14 @@ export default async function handler(req, res) {
       const parsed = JSON.parse(body);
       const url = parsed.url;
       
-      if (!url || !ytdl.validateURL(url)) {
+      if (!url || (!url.includes('youtube.com') && !url.includes('youtu.be'))) {
         res.status(400).send('Invalid YouTube URL');
         return;
       }
 
-      // Configure Agent with Cookies to bypass "Sign in to confirm you're not a bot"
-      let agent;
-      if (process.env.YOUTUBE_COOKIES) {
-        try {
-          const cookies = JSON.parse(process.env.YOUTUBE_COOKIES);
-          agent = ytdl.createAgent(cookies);
-        } catch (e) {
-          console.error("Failed to parse YOUTUBE_COOKIES. Ensure it's a valid JSON array of cookies.");
-        }
-      }
-
-      const info = await ytdl.getInfo(url, agent ? { agent } : undefined);
-      const title = info.videoDetails.title.replace(/[\\/:*?"<>|]/g, ''); // Clean filename
+      // Fetch video title (JSON dump)
+      const info = await youtubedl(url, { dumpJson: true, noWarnings: true });
+      const title = (info.title || 'Unknown Title').replace(/[\\/:*?"<>|]/g, '');
 
       // Set up Google Drive API
       const auth = new google.auth.JWT(
@@ -76,17 +69,20 @@ export default async function handler(req, res) {
         fields: 'id'
       });
 
-      // Stream YouTube video -> ffmpeg -> PassThrough
-      const ytStream = ytdl(url, { quality: 'highestaudio', agent: agent });
-      
-      ffmpeg(ytStream)
-        .audioBitrate(128)
-        .format('mp3')
-        .on('error', (err) => {
-          console.error('ffmpeg error:', err);
-          res.status(500).send('Error converting audio: ' + err.message);
-        })
-        .pipe(passThrough);
+      // Stream YouTube video to stdout using the standalone yt-dlp
+      const ytProcess = youtubedl.exec(url, {
+        extractAudio: true,
+        audioFormat: 'mp3',
+        audioQuality: 0,
+        ffmpegLocation: ffmpegStatic,
+        output: '-',
+      }, { stdio: ['ignore', 'pipe', 'ignore'] });
+
+      ytProcess.stdout.pipe(passThrough);
+
+      ytProcess.on('error', (err) => {
+        console.error('yt-dlp process error:', err);
+      });
 
       // Wait for the upload to complete
       const uploadedFile = await uploadPromise;
