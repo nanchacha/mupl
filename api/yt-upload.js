@@ -31,8 +31,31 @@ export default async function handler(req, res) {
         return;
       }
 
+      // Prepare yt-dlp options and cookies
+      let ytDlpOptions = { dumpJson: true, noWarnings: true };
+      
+      if (process.env.YOUTUBE_COOKIES) {
+        try {
+          const cookies = JSON.parse(process.env.YOUTUBE_COOKIES);
+          let netscapeCookies = "# Netscape HTTP Cookie File\n";
+          cookies.forEach(c => {
+            const domain = c.domain || '.youtube.com';
+            const includeSubdomains = domain.startsWith('.') ? 'TRUE' : 'FALSE';
+            const cookiePath = c.path || '/';
+            const secure = (c.secure || c.name.startsWith('__Secure')) ? 'TRUE' : 'FALSE';
+            const expiry = c.expirationDate ? Math.floor(c.expirationDate) : 2147483647;
+            netscapeCookies += `${domain}\t${includeSubdomains}\t${cookiePath}\t${secure}\t${expiry}\t${c.name}\t${c.value}\n`;
+          });
+          const tempCookieFile = path.join(os.tmpdir(), 'yt-cookies.txt');
+          import('fs').then(fs => fs.writeFileSync(tempCookieFile, netscapeCookies));
+          ytDlpOptions.cookies = tempCookieFile;
+        } catch (e) {
+          console.error("Failed to parse YOUTUBE_COOKIES as JSON.", e);
+        }
+      }
+
       // Fetch video title (JSON dump)
-      const info = await youtubedl(url, { dumpJson: true, noWarnings: true });
+      const info = await youtubedl(url, ytDlpOptions);
       const title = (info.title || 'Unknown Title').replace(/[\\/:*?"<>|]/g, '');
 
       // Set up Google Drive API
@@ -83,13 +106,18 @@ export default async function handler(req, res) {
       });
 
       // Stream YouTube video to stdout using the standalone yt-dlp
-      const ytProcess = youtubedl.exec(url, {
+      const execOptions = {
         extractAudio: true,
         audioFormat: 'mp3',
         audioQuality: 0,
         ffmpegLocation: ffmpegStatic,
         output: '-',
-      }, { stdio: ['ignore', 'pipe', 'ignore'] });
+      };
+      if (ytDlpOptions.cookies) {
+        execOptions.cookies = ytDlpOptions.cookies;
+      }
+
+      const ytProcess = youtubedl.exec(url, execOptions, { stdio: ['ignore', 'pipe', 'ignore'] });
 
       ytProcess.stdout.pipe(passThrough);
 
