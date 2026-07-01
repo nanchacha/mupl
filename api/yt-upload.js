@@ -36,10 +36,19 @@ export default async function handler(req, res) {
       const title = (info.title || 'Unknown Title').replace(/[\\/:*?"<>|]/g, '');
 
       // Set up Google Drive API
+      let privateKey = process.env.GOOGLE_PRIVATE_KEY || '';
+      // Remove surrounding quotes if user accidentally pasted them in Vercel
+      if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+        privateKey = privateKey.slice(1, -1);
+      } else if (privateKey.startsWith("'") && privateKey.endsWith("'")) {
+        privateKey = privateKey.slice(1, -1);
+      }
+      privateKey = privateKey.replace(/\\n/g, '\n');
+
       const auth = new google.auth.JWT(
         process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
         null,
-        (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+        privateKey,
         ['https://www.googleapis.com/auth/drive.file']
       );
 
