@@ -37,12 +37,8 @@ export default async function handler(req, res) {
 
       // Set up Google Drive API
       let privateKey = process.env.GOOGLE_PRIVATE_KEY || '';
-      // Remove surrounding quotes if user accidentally pasted them in Vercel
-      if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
-        privateKey = privateKey.slice(1, -1);
-      } else if (privateKey.startsWith("'") && privateKey.endsWith("'")) {
-        privateKey = privateKey.slice(1, -1);
-      }
+      // Remove ANY quotes if user accidentally pasted them in Vercel
+      privateKey = privateKey.replace(/"/g, '').replace(/'/g, '');
       privateKey = privateKey.replace(/\\n/g, '\n');
 
       const auth = new google.auth.JWT(
@@ -51,6 +47,13 @@ export default async function handler(req, res) {
         privateKey,
         ['https://www.googleapis.com/auth/drive.file']
       );
+
+      try {
+        // Explicitly authorize to ensure credentials are valid before making requests
+        await auth.authorize();
+      } catch (authErr) {
+        throw new Error(`Google API Authentication Failed. Please check your Vercel Environment Variables. The private key or email is incorrectly formatted. Details: ${authErr.message}`);
+      }
 
       const drive = google.drive({ version: 'v3', auth });
       const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
@@ -73,6 +76,7 @@ export default async function handler(req, res) {
 
       // Start Google Drive Upload asynchronously
       const uploadPromise = drive.files.create({
+        auth: auth, // Explicitly passing auth to prevent missing credential errors
         resource: fileMetadata,
         media: media,
         fields: 'id'
