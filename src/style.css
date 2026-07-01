@@ -484,43 +484,123 @@ body {
   /* Make bottom player span full width of screen, not just main-content */
   .bottom-player-bar {
     position: fixed;
-    width: calc(100vw - 32px);
-    left: 16px;
+    width: 100vw;
+    left: 0;
     transform: none;
-    bottom: 16px;
-    padding: 16px;
-  }
-  
-  .controls-row {
-    gap: 8px;
-    position: relative;
-  }
-  
-  .left-controls, .right-controls {
-    gap: 10px;
-  }
-  
-  .center-controls {
+    bottom: 0;
+    padding: 24px 24px 32px 24px;
+    border-radius: 24px 24px 0 0;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
     gap: 16px;
   }
   
-  .play-pause-btn {
-    width: 44px;
-    height: 44px;
+  .controls-row {
+    display: contents;
   }
   
-  /* Move volume slider to the left on mobile */
+  .left-controls {
+    order: 1;
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+
+  .track-info-text-mini {
+    align-items: center;
+    text-align: center;
+    max-width: 100%;
+  }
+
+  .progress-container {
+    order: 2;
+    width: 100%;
+  }
+  
+  .center-controls {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 4px;
+  }
+  
+  .right-controls {
+    order: 4;
+    width: 100%;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 8px;
+  }
+  
+  .play-pause-btn {
+    width: 56px;
+    height: 56px;
+  }
+  
+  /* Reset volume wrapper absolute positioning */
   .volume-wrapper {
+    position: static;
+    transform: none;
     display: flex;
-    gap: 8px;
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
+    gap: 12px;
   }
   
   .volume-slider {
-    width: 50px;
+    width: 100px;
   }
 }
 
+/* YouTube Upload Styles */
+.yt-upload-container {
+  display: flex;
+  gap: 8px;
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.yt-upload-container input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.yt-upload-container input:focus {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.primary-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  width: 36px;
+  cursor: pointer;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.primary-btn:hover {
+  transform: scale(1.05);
+}
+
+.primary-btn:active {
+  transform: scale(0.95);
+}
+
+.primary-btn:disabled,
+.yt-upload-container input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

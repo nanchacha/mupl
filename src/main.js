@@ -17,6 +17,18 @@ document.querySelector('#app').innerHTML = `
         </svg>
       </button>
     </div>
+
+    <div class="yt-upload-container">
+      <input type="text" id="ytUrlInput" placeholder="Paste YouTube Link..." />
+      <button id="ytUploadBtn" class="primary-btn" title="Extract and Save to Drive">
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+      </button>
+    </div>
+
     <div id="trackList" class="track-list">
       <!-- Tracks loaded here -->
     </div>
@@ -141,6 +153,49 @@ closeSidebarBtn.addEventListener('click', () => {
 sidebarOverlay.addEventListener('click', () => {
   sidebar.classList.remove('mobile-open');
   sidebarOverlay.classList.remove('mobile-open');
+});
+
+const ytUrlInput = document.getElementById('ytUrlInput');
+const ytUploadBtn = document.getElementById('ytUploadBtn');
+
+ytUploadBtn.addEventListener('click', async () => {
+  const url = ytUrlInput.value.trim();
+  if (!url) return;
+  
+  ytUploadBtn.disabled = true;
+  ytUrlInput.disabled = true;
+  statusMsg.textContent = 'Extracting and uploading to Drive...';
+  
+  try {
+    const res = await fetch('/api/yt-upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+    
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(errorText || 'Upload failed');
+    }
+    
+    const data = await res.json();
+    statusMsg.textContent = 'Upload complete! Refreshing playlist...';
+    
+    // Refresh the folder
+    ytUrlInput.value = '';
+    await loadFolder('1SS9kZ16KErhHA-QMZmMm_QsO8aqS7O9C');
+  } catch (err) {
+    console.error(err);
+    statusMsg.textContent = 'Error: ' + err.message;
+  } finally {
+    ytUploadBtn.disabled = false;
+    ytUrlInput.disabled = false;
+    setTimeout(() => {
+      if (statusMsg.textContent.startsWith('Error') || statusMsg.textContent.includes('complete')) {
+        statusMsg.textContent = '';
+      }
+    }, 4000);
+  }
 });
 
 const customPlayBtn = document.getElementById('customPlayBtn');

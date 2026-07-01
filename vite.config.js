@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import https from 'https';
+import ytUploadHandler from './api/yt-upload.js';
 
 export default defineConfig({
   plugins: [
@@ -116,6 +117,9 @@ export default defineConfig({
             res.end(err.message);
           });
         });
+
+        // Endpoint to handle YouTube upload
+        server.middlewares.use('/api/yt-upload', ytUploadHandler);
       }
     }
   ]
